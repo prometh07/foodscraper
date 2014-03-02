@@ -4,6 +4,7 @@ require './config/environments'
 require './models/restaurant'
 
 get '/' do
-  puts db.class
+  'Hello world'
+  puts settings.db.class
 end
 

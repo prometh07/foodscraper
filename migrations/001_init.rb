@@ -17,7 +17,7 @@ Sequel.migration do
   end
 
   down do
-    drop_table :restaurants
     drop_table :dishes
+    drop_table :restaurants
   end
 end

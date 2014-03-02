@@ -2,7 +2,7 @@ Sequel.migration do
   up do
     create_table :restaurants do
       primary_key :id
-      String :name, :text => true
+      String :name
       String :city
       String :Street
       String :site
@@ -11,7 +11,7 @@ Sequel.migration do
     create_table :dishes do
       primary_key :id
       foreign_key :restaurant_id, :restaurants
-      String :dish
+      String :dish, :text => true
       Integer :price
     end
   end

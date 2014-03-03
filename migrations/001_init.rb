@@ -4,7 +4,7 @@ Sequel.migration do
       primary_key :id
       String :name
       String :city
-      String :Street
+      String :street
       String :site
     end
 

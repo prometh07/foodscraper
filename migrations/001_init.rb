@@ -6,6 +6,7 @@ Sequel.migration do
       String :city
       String :street
       String :site
+      unique [:city, :street]
     end
 
     create_table :dishes do

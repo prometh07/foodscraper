@@ -7,7 +7,6 @@ Sequel.connect ENV['DATABASE_URL']
 require './models/restaurant'
 require './models/dish'
 
-
 class RestaurantFinder < Mechanize
   attr_accessor :cities, :home_page, :db
 
@@ -38,7 +37,7 @@ class RestaurantFinder < Mechanize
       street = page.parser.css("span.street").text.strip
       site = page.parser.css("a.www").text.strip
 
-      if !name.end_with?("(zamknięte)")
+      if !name.end_with?("(zamknięte)") && Restaurant.where(:city => city, :street => street).count == 0
         site = get_website(name, city, street) if site.empty?
         save_restaurant(name, city, street, site) 
       end
@@ -57,16 +56,21 @@ class RestaurantFinder < Mechanize
 
   def get_website(name, city, street)
     bad_sites = ["maps.google.pl", "http://www.gastronauci.pl", "https://pl-pl.facebook.com"]
-
+    puts city, street
     transact do
       get "http://www.google.pl" 
       form = page.form('f')
-      form.q = "#{name} #{city}, #{street}"
+      form.q = "#{name} #{city}"
       submit(form, form.buttons.first)
-      site = page.parser.css("h3.r a").first['href'][7..-1]
-      site = site[0..site.index("&sa=")-1]
-      if bad_sites.any?{|s| site.start_with?(s)}
-        site = ""
+      site = ""
+      page.parser.css("h3.r a").each do |elem|
+        site = elem['href']
+        site = site[7..site.index("&sa=")-1]
+        if bad_sites.any?{|s| site.start_with?(s)}
+          site = ""
+          next
+        end
+        break
       end
       site
     end

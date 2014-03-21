@@ -22,3 +22,4 @@ Sequel.migration do
     drop_table :restaurants
   end
 end
+

@@ -14,8 +14,6 @@ class RestaurantFinder < Mechanize
   def initialize
     super()
     @cities = ["Poznań"]
-    @home_page = "http://www.gastronauci.pl/"
-    @db = Sequel.connect ENV['DATABASE_URL']
   end
 
   def get_restaurants

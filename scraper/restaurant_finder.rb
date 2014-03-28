@@ -8,11 +8,11 @@ require './models/restaurant'
 require './models/dish'
 
 class RestaurantFinder < Mechanize
-  attr_accessor :cities, :home_page, :db
+  attr_accessor :cities
 
   def initialize
     super()
-    @cities = ["Poznań"]
+    @cities = ['Poznań']
   end
 
   def get_restaurants
@@ -21,9 +21,9 @@ class RestaurantFinder < Mechanize
       more_restaurants = true
       while more_restaurants do
         puts "Parsing page no. #{page.parser.css("span.current.rounded.element").text}" 
-        restaurants = page.parser.css("h3.restaurant_header a").map{|link_obj| link_obj["href"]}
+        restaurants = page.parser.css('h3.restaurant_header a').map{|link_obj| link_obj['href']}
         restaurants.each{|restaurant| visit_restaurant restaurant}
-        link = page.link_with(:text => "następna") 
+        link = page.link_with(text: 'następna') 
         link ? link.click : more_restaurants = false
       end
     end
@@ -32,12 +32,14 @@ class RestaurantFinder < Mechanize
   def visit_restaurant(restaurant)
     transact do
       get restaurant
-      name = page.parser.css("div#restaurant_title a.fn").text.strip
-      city = page.parser.css("span.postcode a").text.strip
-      street = page.parser.css("span.street").text.strip
-      site = page.parser.css("a.www").text.strip
+      name = page.parser.css('div#restaurant_title a.fn').text.strip
+      city = page.parser.css('span.postcode a').text.strip
+      street = page.parser.css('span.street').text.strip
+      site = page.parser.css('a.www').text.strip
+      
+      get_website(name, city, street) if name =~ /Restauracja Fryga/
 
-      if !name.end_with?("(zamknięte)") && Restaurant.where(:city => city, :street => street).count == 0
+      if !name.end_with?('(zamknięte)') && Restaurant.where(city: city, street: street).count == 0
         site = get_website(name, city, street) if site.empty?
         save_restaurant(name, city, street, site) 
       end
@@ -46,28 +48,28 @@ class RestaurantFinder < Mechanize
 
   def save_restaurant(name, city, street, site)
     begin
-      Restaurant.create(:name => name, :city => city, :street => street, :site => site)
+      Restaurant.create(name: name, city: city, street: street, site: site)
     rescue Sequel::UniqueConstraintViolation => e 
-      duplicate_name = Restaurant.where(:city => city, :street => street).first.name
-      puts "Restaurant with given address already " \
+      duplicate_name = Restaurant.where(city: city, street: street).first.name
+      puts 'Restaurant with given address already ' \
            "exists: #{duplicate_name}. Current: #{name}" if duplicate_name != name
     end
   end
 
   def get_website(name, city, street)
-    bad_sites = ["maps.google.pl", "http://www.gastronauci.pl", "https://pl-pl.facebook.com"]
-    puts city, street
+    bad_sites = ['maps.google.pl', 'http://www.gastronauci.pl', 'https://pl-pl.facebook.com']
     transact do
-      get "http://www.google.pl" 
+      get 'http://www.google.pl' 
       form = page.form('f')
-      form.q = "#{name} #{city}"
+      form.q = "#{name} #{city}".encode(page.encoding, invalid: :replace, undef: :replace)
       submit(form, form.buttons.first)
-      site = ""
-      page.parser.css("h3.r a").each do |elem|
+      site = ''
+      page.parser.css('h3.r a').each do |elem|
         site = elem['href']
-        site = site[7..site.index("&sa=")-1]
+        binding.pry
+        site = site[site.index('http')..site.index('&sa=')-1]
         if bad_sites.any?{|s| site.start_with?(s)}
-          site = ""
+          site = ''
           next
         end
         break
